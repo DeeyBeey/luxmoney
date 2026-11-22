@@ -1,0 +1,6 @@
+# Secrets (Plaid keys)
+.env
+.env.*
+
+# Compiled binary from `go build`
+/backend
