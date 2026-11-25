@@ -4,33 +4,28 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 )
 
 func main() {
-	port := 8080
-	if p := os.Getenv("PORT"); p != "" {
-		n, err := strconv.Atoi(p)
-		if err != nil || n < 1 || n > 65535 {
-			log.Fatal("PORT must be an integer from 1 to 65535")
-		}
-		port = n
+	cfg, err := loadConfig()
+	if err != nil {
+		log.Fatalf("config:\n%v", err)
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handleHealth)
 
 	srv := &http.Server{
-		Addr:         ":" + strconv.Itoa(port),
+		Addr:         ":" + strconv.Itoa(cfg.port),
 		Handler:      mux,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Printf("listening on :%d", port)
+	log.Printf("listening on :%d (plaid: %s)", cfg.port, cfg.plaidEnv)
 	log.Fatal(srv.ListenAndServe())
 }
 
