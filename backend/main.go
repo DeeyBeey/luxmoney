@@ -5,27 +5,32 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 )
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	port := 8080
+	if p := os.Getenv("PORT"); p != "" {
+		n, err := strconv.Atoi(p)
+		if err != nil || n < 1 || n > 65535 {
+			log.Fatal("PORT must be an integer from 1 to 65535")
+		}
+		port = n
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handleHealth)
 
 	srv := &http.Server{
-		Addr:         ":" + port,
+		Addr:         ":" + strconv.Itoa(port),
 		Handler:      mux,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Printf("listening on :%s", port)
+	log.Printf("listening on :%d", port)
 	log.Fatal(srv.ListenAndServe())
 }
 

@@ -1,0 +1,18 @@
+version: "2"
+
+linters:
+  # "standard" = errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    - bodyclose   # unclosed http.Response bodies (we'll be calling Plaid)
+    - errorlint   # use errors.Is/As instead of == on wrapped errors
+    - gosec       # common security issues (timeouts, file perms, etc.)
+  settings:
+    errcheck:
+      check-type-assertions: true # flag v := x.(T) without the ok check
+      check-blank: true           # flag _ = f() that silently drops an error
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
