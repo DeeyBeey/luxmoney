@@ -13,6 +13,7 @@ type config struct {
 	plaidClientID string
 	plaidSecret   string
 	plaidEnv      string // "sandbox" or "production"
+	databaseURL   string // postgres://user:password@host:port/dbname
 }
 
 // loadConfig reads the environment into a config.
@@ -22,6 +23,7 @@ func loadConfig() (config, error) {
 		plaidClientID: os.Getenv("PLAID_CLIENT_ID"),
 		plaidSecret:   os.Getenv("PLAID_SECRET"),
 		plaidEnv:      os.Getenv("PLAID_ENV"),
+		databaseURL:   os.Getenv("DATABASE_URL"),
 	}
 
 	var errs []error
@@ -40,6 +42,9 @@ func loadConfig() (config, error) {
 	}
 	if cfg.plaidSecret == "" {
 		errs = append(errs, errors.New("PLAID_SECRET is required"))
+	}
+	if cfg.databaseURL == "" {
+		errs = append(errs, errors.New("DATABASE_URL is required"))
 	}
 
 	switch cfg.plaidEnv {
