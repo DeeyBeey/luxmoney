@@ -49,6 +49,24 @@ func (c *Client) CreateSandboxPublicToken(ctx context.Context) (string, error) {
 	return resp.PublicToken, nil
 }
 
+// Item is one linked bank login. AccessToken is secret and never leaves the backend.
+type Item struct {
+	AccessToken string
+	ItemID      string
+}
+
+// ExchangePublicToken trades a one-time public token for the Item's
+// permanent access token and ID. Store the result: it can't be fetched again.
+func (c *Client) ExchangePublicToken(ctx context.Context, publicToken string) (Item, error) {
+	resp, err := c.sdk.Item.ExchangePublicToken(ctx, &plaid.ItemPublicTokenExchangeRequest{
+		PublicToken: publicToken,
+	})
+	if err != nil {
+		return Item{}, fmt.Errorf("exchange public token: %w", err)
+	}
+	return Item{AccessToken: resp.AccessToken, ItemID: resp.ItemID}, nil
+}
+
 // baseURL maps PLAID_ENV to Plaid's API host.
 // loadConfig already rejected anything other than these two values.
 func baseURL(env string) string {

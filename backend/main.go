@@ -20,6 +20,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/health", handleHealth)
+	mux.Handle("POST /api/item/public-token/exchange", handleExchangePublicToken(plaidClient))
 
 	// Sandbox-only shortcut: in production this route doesn't exist at all.
 	if cfg.plaidEnv == "sandbox" {
@@ -53,6 +54,30 @@ func handleSandboxPublicToken(plaidClient *plaidapi.Client) http.HandlerFunc {
 			return
 		}
 		writeJSON(w, http.StatusOK, map[string]string{"public_token": token})
+	}
+}
+
+// handleExchangePublicToken returns a handler that trades the app's public
+// token for an access token. The access token is never sent back.
+func handleExchangePublicToken(plaidClient *plaidapi.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			PublicToken string `json:"public_token"`
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<10) // 1 KB is plenty for a token
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.PublicToken == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "public_token is required"})
+			return
+		}
+
+		item, err := plaidClient.ExchangePublicToken(r.Context(), body.PublicToken)
+		if err != nil {
+			log.Printf("handleExchangePublicToken: %v", err)
+			writeJSON(w, http.StatusBadGateway, map[string]string{"error": "plaid request failed"})
+			return
+		}
+		// TODO: store item.AccessToken. Until storage exists, it's dropped here.
+		writeJSON(w, http.StatusOK, map[string]string{"item_id": item.ItemID})
 	}
 }
 
